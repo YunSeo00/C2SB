@@ -13,6 +13,7 @@ class NumericalDataLoader:
         self.T = opts.time_horizon
         self.tuningT = opts.tuning_time_horizon
         self.num_of_rounds = self.tuningT if self.is_tuning else self.T
+        self.seed = opts.seed
         
     def return_info(self):
         return self.num_of_rounds, self.dim, self.k, self.N
@@ -25,9 +26,9 @@ class NumericalDataLoader:
         
         # set base seed
         if self.is_tuning:
-            seed = self.T * self.iter_num + self.tuningT * iter
+            seed = self.T * self.iter_num + self.tuningT * iter + self.seed
         else:
-            seed = self.T * iter
+            seed = self.T * iter + self.seed
             
         self.mu = self.make_mu(seed) # create true mu for each iteration
         

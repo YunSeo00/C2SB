@@ -13,32 +13,37 @@ def read_options(args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     # simulation setting
     parser.add_argument('--iterations', help='The number of iterations', type=int, default=5)
-    parser.add_argument('--time_horizon', help='The length of rounds', type=int, default=50)
+    parser.add_argument('--time_horizon', help='The length of rounds', type=int, default=10000)
     parser.add_argument('--error_var', help='The variance of the error term', type=float, default=1)
     parser.add_argument('--dim', help='The dimension of the context', type=int, default=2)
     parser.add_argument('--arms', help='The number of arms', type=int, default=10)
     parser.add_argument('--super_set_size', help='The size of the super set', type=int, default=4)
     parser.add_argument('--nu', help='The parameter of the time-varying term', type=str, default='set1')
     parser.add_argument('--is_tuning', help='Whether to tune the parameter', type=bool, default=False)
-    parser.add_argument('--tuning_time_horizon', help='The length of tuning rounds', type=int, default=10)
+    parser.add_argument('--tuning_time_horizon', help='The length of tuning rounds', type=int, default=100)
     parser.add_argument('--oracle', help= 'The oracle to use', type=str, default='topK')
     parser.add_argument('--dataset', help='The dataset to use', type=str, default='numerical')
-    parser.add_argument('--seeds', help='The seed for the random number generator', type=int, default=42)
+    parser.add_argument('--seed', help='The seed for the random number generator', type=int, default=42)
     # model
-    parser.add_argument('--models', help='The model to use', type=str, default='["C2SB"]') # ["LinUCB", "LinTS", "C2SB"]
-    # save setting
-    parser.add_argument('--save_path', help='The path to save the results', type=str, default='test')
-    parser.add_argument('--save_plot', help='Whether to save the plot', type=bool, default=False)
+    parser.add_argument('--models', help='The model to use', type=str, default='["LinUCB", "LinTS", "C2SB"]') # ["LinUCB", "LinTS", "C2SB"]
+    
     opts = parser.parse_args(args)
     return opts
 
 opts = read_options(sys.argv[1:])
 
 base_dir = os.getcwd()
-if opts.save_path is not None:
-    save_path = base_dir + '/results/' + opts.save_path
+save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tunintT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}_seed_{opts.seed}"
+
+if save_path is not None:
+    save_path = base_dir + '/results/' + save_path
     if not os.path.exists(save_path):
         os.makedirs(save_path, exist_ok=True)
+    with open(os.path.join(save_path + '/args.txt'), 'w') as f:
+        f.write('\n'.join([str(k) + ',' + str(v) for k, v in sorted(vars(opts).items(), key=lambda x: x[0])]))
+        f.write('\n')
+    f.close()
+
 
 # load data_loader
 if opts.dataset == 'numerical':
@@ -53,7 +58,7 @@ exploitation_rate_tuning_list = [1, 0.5]
 tuning_num = len(exploitation_rate_tuning_list)
 
 if opts.is_tuning == True:
-    save_name = f"iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}"
+    save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}"
     print(save_name)    
     # opt_cum_expected_reward, opt_cum_real_reward = optimal()
     for model in eval(opts.models):
@@ -73,8 +78,8 @@ if opts.is_tuning == True:
 
 # when tuning is not needed
 else:
-    tuning_save_name = f"iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}"
-    save_name = f"iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}"
+    tuning_save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}"
+    save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}"
     
     for model in eval(opts.models):
         print(f"Running {model} main simulation")
