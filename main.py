@@ -42,7 +42,6 @@ if save_path is not None:
     with open(os.path.join(save_path + '/args.txt'), 'w') as f:
         f.write('\n'.join([str(k) + ',' + str(v) for k, v in sorted(vars(opts).items(), key=lambda x: x[0])]))
         f.write('\n')
-    f.close()
 
 
 # load data_loader
@@ -53,8 +52,7 @@ if opts.dataset == 'numerical':
 print("This simulation is running with the following options:")
 print(*opts.__dict__.items(), sep="\n")
 
-# exploitation_rate_tuning_list = [1, 0.5, 0.25, 0.125, 0.0625, 0.0125, 0.00625]
-exploitation_rate_tuning_list = [1, 0.5]
+exploitation_rate_tuning_list = [1, 0.5, 0.25, 0.125, 0.0625, 0.0125, 0.00625]
 tuning_num = len(exploitation_rate_tuning_list)
 
 if opts.is_tuning == True:
@@ -72,7 +70,7 @@ if opts.is_tuning == True:
                 data_loader.data_init_for_iter(iter)
                 
                 real_rewards, _ = eval(model)(data_loader, exploitation_rate)
-                real_reward_list.append(real_rewards)
+                real_reward_list.append(np.cumsum(real_rewards)[-1])
             tuning_table.loc[tuning_table['exploitation_rate'] == exploitation_rate, 'cumulative_real_reward'] = np.mean(real_reward_list)
         tuning_table.to_csv(f"{save_path}/tuning_real_reward_{model}_{save_name}.csv", index=False)
 
@@ -96,7 +94,11 @@ else:
             data_loader.data_init_for_iter(iter)
             
             real_rewards, regrets = eval(model)(data_loader, exploitation_rate)
-            cum_reward_list.append(real_rewards)
-            cum_regret_list.append(regrets)
-        pd.DataFrame(cum_reward_list).to_csv(f"{save_path}/cum_reward_{model}_{save_name}.csv", index=False)
-        pd.DataFrame(cum_regret_list).to_csv(f"{save_path}/cum_regret_{model}_{save_name}.csv", index=False)        
+            cum_reward_list.append(np.cumsum(real_rewards))
+            cum_regret_list.append(np.cumsum(regrets))
+        # pd.DataFrame(cum_reward_list).to_csv(f"{save_path}/cum_reward_{model}_{save_name}.csv", index=False)
+        # pd.DataFrame(cum_regret_list).to_csv(f"{save_path}/cum_regret_{model}_{save_name}.csv", index=False)        
+        with open(f"{save_path}/cum_reward_{model}_{save_name}.npy", "wb") as f:
+            np.save(f, cum_reward_list)
+        with open(f"{save_path}/cum_regret_{model}_{save_name}.npy", "wb") as f:
+            np.save(f, cum_regret_list)
