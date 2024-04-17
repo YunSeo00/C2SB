@@ -1,6 +1,7 @@
 import numpy as np
+from utils.oracle import *
 
-def LinTS(data_loader, v):
+def LinTS(data_loader, v, oracle_func):
     '''
     data_loader: the data loader object
     v : exploration rate (tuning parameter)
@@ -22,13 +23,13 @@ def LinTS(data_loader, v):
         est_scores = np.array([np.dot(context, mu_tilde) for context in contexts])
         
         # get super set
-        super_set = np.argsort(est_scores)[-k:]
+        super_set = eval(oracle_func)
         
         # update parameter
         for act in super_set:
             B += np.outer(contexts[act], contexts[act])
             y += real_scores[act] * contexts[act]
-            real_rewards[t] += real_scores[act]
+        real_rewards[t] = data_loader.calculate_reward(super_set, t, evaluate=True)
         regrets[t] = optimal_reward - real_rewards[t]
         
     return real_rewards, regrets

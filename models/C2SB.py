@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.stats
+from utils.oracle import *
 
-def C2SB(data_loader, v):
+def C2SB(data_loader, v, oracle_func):
     '''
     data_loader: the data loader object
     v : exploration rate (tuning parameter)
@@ -24,7 +25,8 @@ def C2SB(data_loader, v):
         est_scores = np.array([np.dot(context, mu_tilde) for context in contexts])
         
         # get super set
-        super_set = np.argsort(est_scores)[-k:]
+        # super_set = np.argsort(est_scores)[-k:]
+        super_set = eval(oracle_func)
         
         # compute posterior dist
         mu_mc = scipy.stats.multivariate_normal.rvs(mu_tilde, V, 1000)
@@ -37,8 +39,8 @@ def C2SB(data_loader, v):
         for act in super_set:
             B += np.outer(contexts[act]-b_mean, contexts[act]-b_mean)
             y += 2 * (contexts[act] - b_mean) * real_scores[act]
-            real_rewards[t] += real_scores[act]
         B += ((contexts - b_mean) * pi_est.reshape(N, -1)).T.dot(contexts - b_mean)
         regrets[t] = optimal_reward - real_rewards[t]
+        real_rewards[t] = data_loader.calculate_reward(super_set, t, evaluate=True)
         
     return real_rewards, regrets

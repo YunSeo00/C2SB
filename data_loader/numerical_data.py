@@ -14,6 +14,7 @@ class NumericalDataLoader:
         self.tuningT = opts.tuning_time_horizon
         self.num_of_rounds = self.tuningT if self.is_tuning else self.T
         self.seed = opts.seed
+        self.reward_function = opts.reward_function
         
     def return_info(self):
         return self.num_of_rounds, self.dim, self.k, self.N
@@ -97,17 +98,19 @@ class NumericalDataLoader:
                 contexts.append(self.make_x_without_intercept())
             errors.append(np.random.normal(0, self.R))
         return [contexts, errors]
-
     
-        
-# def load_vs(nu_type):
-#     pass
+    def calculate_reward(self, arms, t, scores=None, evaluate = False):
+        if not evaluate:
+            assert scores is not None
+            return eval('self.' + self.reward_function)(arms, t, scores)
+        else:
+            return eval('self.' + self.reward_function)(arms, t, self.real_scores[t])
 
-# def make_mu():
-#     pass
+    def total_sum(self, super_set, t, scores):
+        return np.sum([scores[arm] for arm in super_set])
 
-# def make_x():
-#     pass
-
-# def load_data():
-#     pass
+    def diversity(self, super_set, t, scores):
+        contexts = np.array([self.data[t][0][arm] for arm in super_set])
+        reward = np.sum([scores[arm] for arm in super_set])
+        reward += 1/2 * len(super_set) * np.log(2*np.pi*np.e) + 1/2 * np.log(np.linalg.det(np.dot(contexts, contexts.T)+np.eye(len(super_set))))
+        return reward

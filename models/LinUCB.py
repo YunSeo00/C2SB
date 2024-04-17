@@ -1,6 +1,7 @@
 import numpy as np
+from utils.oracle import *
 
-def LinUCB(data_loader, v):
+def LinUCB(data_loader, v, oracle_func):
     '''
     data_loader: the data loader object
     v : exploration rate (tuning parameter)
@@ -19,16 +20,16 @@ def LinUCB(data_loader, v):
         mu_hat = np.linalg.inv(V).dot(b)
         est_reward = np.array([np.dot(context, mu_hat) for context in contexts])
         est_interval = np.array([np.sqrt(np.dot(np.dot(context, np.linalg.inv(V)), context)) for context in contexts])
-        est_upper = est_reward + v * est_interval
+        est_score = est_reward + v * est_interval
         
         # get super set
-        actions = np.argsort(est_upper)[-k:]
+        super_set = eval(oracle_func)
         
         # update parameter
-        for act in actions:
+        for act in super_set:
             V += np.outer(contexts[act], contexts[act])
             b += real_scores[act] * contexts[act]
-            real_rewards[t] += real_scores[act]
+        real_rewards[t] = data_loader.calculate_reward(super_set, t, evaluate=True)
         regrets[t] = optimal_reward - real_rewards[t]
         
     return real_rewards, regrets
