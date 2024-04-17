@@ -58,9 +58,10 @@ class NumericalDataLoader:
             elif self.nu == "set11": self.vs[t] = (np.sin(t / 20) * t ** (1/2))/(np.log(t+2))
             
             self.real_scores.append(np.array([np.dot(context, self.mu) + error + self.vs[t] for context, error in zip(contexts, errors)])) # contexts \cdot mu + nu_t + error_t
-            actions = np.argsort(self.real_scores[t])[-self.k:]
-            self.sum_real_optimal_rewards[t] = np.sum(self.real_scores[t][actions])  # \sum_{i \in S} (contexts \cdot mu + nu_t + error_t)
-            
+            # actions = np.argsort(self.real_scores[t])[-self.k:]
+            # self.sum_real_optimal_rewards[t] = np.sum(self.real_scores[t][actions])  # \sum_{i \in S} (contexts \cdot mu + nu_t + error_t)
+            actions = self.greedy_oracle(t)
+            self.sum_real_optimal_rewards[t] = self.calculate_reward(actions, t, evaluate=True)
             # if t % 500 == 0:
             #     print(self.real_scores[t][actions])
             #     print(self.sum_real_optimal_rewards[t])
@@ -114,3 +115,14 @@ class NumericalDataLoader:
         reward = np.sum([scores[arm] for arm in super_set])
         reward += 1/2 * len(super_set) * np.log(2*np.pi*np.e) + 1/2 * np.log(np.linalg.det(np.dot(contexts, contexts.T)+np.eye(len(super_set))))
         return reward
+    
+    def greedy_oracle(self, t):
+        As = set(range(self.N))
+        S = set()
+        for _ in range(self.k):
+            rewards = np.zeros(self.N)
+            for arm in set.difference(As, S):
+                tmp_set = list(S)+[arm]
+                rewards[arm] = self.calculate_reward(tmp_set, t, evaluate=True)
+            S.add(np.argmax(rewards))
+        return np.array(list(S))
