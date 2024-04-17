@@ -20,7 +20,7 @@ def LinUCB(data_loader, v, oracle_func):
         mu_hat = np.linalg.inv(V).dot(b)
         est_reward = np.array([np.dot(context, mu_hat) for context in contexts])
         est_interval = np.array([np.sqrt(np.dot(np.dot(context, np.linalg.inv(V)), context)) for context in contexts])
-        est_score = est_reward + v * est_interval
+        est_scores = est_reward + v * est_interval
         
         # get super set
         super_set = eval(oracle_func)
