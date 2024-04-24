@@ -27,7 +27,7 @@ opts = read_options(sys.argv[1:])
 opts = read_options(sys.argv[1:])
 
 base_dir = os.getcwd()
-save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tunintT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}_seed_{opts.seed}"
+save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}_seed_{opts.seed}"
 save_path = base_dir + '/results/' + save_path
 
 model = 'C2SB'
