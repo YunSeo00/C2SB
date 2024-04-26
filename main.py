@@ -4,32 +4,14 @@ import numpy as np
 import sys
 import os
 
+from utils.parser import read_options
+
 from models.LinUCB import LinUCB
 from models.LinTS import LinTS
 from models.C2SB import C2SB
 from utils.oracle import set_oracle
 
-def read_options(args=sys.argv[1:]):
-    parser = argparse.ArgumentParser()
-    # simulation setting
-    parser.add_argument('--iterations', help='The number of iterations', type=int, default=5)
-    parser.add_argument('--time_horizon', help='The length of rounds', type=int, default=10)
-    parser.add_argument('--error_var', help='The variance of the error term', type=float, default=0.1)
-    parser.add_argument('--dim', help='The dimension of the context', type=int, default=2)
-    parser.add_argument('--arms', help='The number of arms', type=int, default=10)
-    parser.add_argument('--super_set_size', help='The size of the super set', type=int, default=4)
-    parser.add_argument('--nu', help='The parameter of the time-varying term', type=str, default='set3')
-    parser.add_argument('--is_tuning', help='Whether to tune the parameter', type=bool, default=True)
-    parser.add_argument('--tuning_time_horizon', help='The length of tuning rounds', type=int, default=10)
-    parser.add_argument('--reward_function', help= 'The reward function to use', type=str, default='diversity') # ['total_sum', 'diversity']
-    parser.add_argument('--dataset', help='The dataset to use', type=str, default='numerical')
-    parser.add_argument('--seed', help='The seed for the random number generator', type=int, default=42)
-    # model
-    parser.add_argument('--models', help='The model and oracle set (ex. [(model_name, oracle_type), ...])', type=str, default='[("C2SB", "topk"), ("C2SB", "greedy_oracle"), ("C2SB", "greedy_oracle_for_diversity")]') 
-    # [("LinUCB", "topk"), ("LinTS", "topk"), ("C2SB", "topk"), ("C2SB", "greedy_oracle"), ("C2SB", "greedy_oracle_for_diversity")]
-    
-    opts = parser.parse_args(args)
-    return opts
+
 
 opts = read_options(sys.argv[1:])
 
