@@ -15,7 +15,7 @@ def read_options(args=sys.argv[1:]):
     parser.add_argument('--dim', help='The dimension of the context', type=int, default=2)
     parser.add_argument('--arms', help='The number of arms', type=int, default=10)
     parser.add_argument('--nu', help='The parameter of the time-varying term', type=str, default='set3')
-    parser.add_argument('--oracle', help= 'The oracle to use', type=str, default='topK')
+    parser.add_argument('--reward_function', help= 'The oracle to use', type=str, default='topK')
     parser.add_argument('--super_set_size', help='The size of the super set', type=int, default=4)
     parser.add_argument('--seed', help='The seed for the random number generator', type=int, default=42)
     parser.add_argument('--models', help='The models to graph', type=str, default='["LinUCB", "LinTS", "C2SB"]')
@@ -27,21 +27,20 @@ opts = read_options(sys.argv[1:])
 opts = read_options(sys.argv[1:])
 
 base_dir = os.getcwd()
-save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}_seed_{opts.seed}"
+save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}_seed_{opts.seed}"
 save_path = base_dir + '/results/' + save_path
 
-model = 'C2SB'
-save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_oracle_{opts.oracle}_k_{opts.super_set_size}"
+save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 4))
 fig.tight_layout(pad=4.0)
 steps = np.arange(1, opts.time_horizon+1)
 
 models = eval(opts.models)
-colors = ['r','b','g','y','m','c','k']
+colors = ['r','b','g','y','m','c','k','o','p']
 
-for model in eval(opts.models):
-    data = np.load(f'{save_path}/cum_regret_{model}_{save_name}.npy')
+for model, oracle in eval(opts.models):
+    data = np.load(f'{save_path}/cum_regret_{model}_{oracle}_{save_name}.npy')
     
     model_mean = np.mean(data, axis=0)
     model_std = np.std(data, axis=0)
