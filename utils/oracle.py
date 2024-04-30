@@ -14,7 +14,7 @@ def topk(est_scores, k):
 
 # A greedy oracle algorithm that guarantees (1-e)-approximation when the reward is a nondecreasing submodular set function.
 def greedy_oracle(est_scores, data_loader, t):
-    _, dim, k, N = data_loader.return_info()
+    _, dim, k, N, _ = data_loader.return_info()
     As = set(range(N))
     S = set()
     for _ in range(k):
@@ -30,7 +30,7 @@ def greedy_oracle_for_diversity(est_scores, data_loader, t, lamb = 0.2):
     '''
     lamb: the diversity parameter
     '''
-    _, dim, k, N = data_loader.return_info()
+    _, dim, k, N, _ = data_loader.return_info()
     _, _, contexts = data_loader.load_data_at_round_t(t)
     
     sigma = 1
