@@ -17,11 +17,11 @@ class NumericalDataLoader:
         self.reward_function = opts.reward_function
         
     def return_info(self):
-        return self.num_of_rounds, self.dim, self.k, self.N
+        return self.num_of_rounds, self.dim, self.k, self.N, self.mu
     
     def data_init_for_iter(self, iter):
         self.data = list()
-        self.sum_real_optimal_rewards = np.zeros(self.num_of_rounds)
+        self.sum_exp_optimal_rewards = np.zeros(self.num_of_rounds)
         self.real_scores = list()
         self.vs = np.zeros(self.num_of_rounds)
         
@@ -59,15 +59,15 @@ class NumericalDataLoader:
             
             self.real_scores.append(np.array([np.dot(context, self.mu) + error + self.vs[t] for context, error in zip(contexts, errors)])) # contexts \cdot mu + nu_t + error_t
             # actions = np.argsort(self.real_scores[t])[-self.k:]
-            # self.sum_real_optimal_rewards[t] = np.sum(self.real_scores[t][actions])  # \sum_{i \in S} (contexts \cdot mu + nu_t + error_t)
-            actions = self.greedy_oracle(t)
-            self.sum_real_optimal_rewards[t] = self.calculate_reward(actions, t, evaluate=True)
+            #self.sum_real_optimal_rewards[t] = np.sum(self.real_scores[t][actions])  # \sum_{i \in S} (contexts \cdot mu + nu_t + error_t)
+            # actions = self.greedy_oracle(t)
+            self.sum_exp_optimal_rewards[t] = np.sum([expected_scores[arm] for arm in actions])
             # if t % 500 == 0:
             #     print(self.real_scores[t][actions])
             #     print(self.sum_real_optimal_rewards[t])
 
     def load_data_at_round_t(self, t):
-        return self.sum_real_optimal_rewards[t], self.real_scores[t], self.data[t][0] # optimal_reward, real_scores, contexts
+        return self.sum_exp_optimal_rewards[t], self.real_scores[t], self.data[t][0] # optimal_reward, real_scores, contexts
     
     def make_mu(self, seed) -> np.array: # 각 iteration 마다 1번씩 호출
         np.random.seed(seed)

@@ -6,7 +6,7 @@ def LinTS(data_loader, v, oracle_func):
     data_loader: the data loader object
     v : exploration rate (tuning parameter)
     '''
-    num_of_rounds, dim, k, N = data_loader.return_info()
+    num_of_rounds, dim, k, N, mu = data_loader.return_info()
 
     B = np.eye(dim)
     y = np.zeros(dim)
@@ -14,7 +14,7 @@ def LinTS(data_loader, v, oracle_func):
     regrets = np.zeros(num_of_rounds)
     
     for t in range(num_of_rounds):
-        optimal_reward, real_scores, contexts = data_loader.load_data_at_round_t(t)
+        sum_exp_optimal_reward, real_scores, contexts = data_loader.load_data_at_round_t(t)
         
         # update estimate and compute estimated scores
         mu_hat = np.linalg.inv(B).dot(y)
@@ -26,10 +26,12 @@ def LinTS(data_loader, v, oracle_func):
         super_set = eval(oracle_func)
         
         # update parameter
+        exp_reward = 0
         for act in super_set:
             B += np.outer(contexts[act], contexts[act])
             y += real_scores[act] * contexts[act]
+            exp_reward += np.dot(contexts[act], mu)
         real_rewards[t] = data_loader.calculate_reward(super_set, t, evaluate=True)
-        regrets[t] = optimal_reward - real_rewards[t]
+        regrets[t] = sum_exp_optimal_reward - exp_reward
         
     return real_rewards, regrets
