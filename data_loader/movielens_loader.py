@@ -38,15 +38,19 @@ class MovieLensDataLoader:
             self.query_seq = self.query_seq[:self.tuning_T]
         else:
             self.query_seq = self.query_seq[self.tuning_T:]
-
-    
+            
     def load_data_at_round_t(self, t):
         user = self.query_seq[t]
         user_data = self.data[self.data['userId'] == user]
-        user_data = user_data.sort_values(by='rating', ascending=False)
-        self.contexts = self.item_emb[user_data[:self.k]['movieId'].values]
-        sum_optimal_reward = np.sum(user_data[:self.k]['rating'])
         self.real_score = np.array(user_data['rating'])
+        self.contexts = self.item_emb[user_data['movieId'].values]
+        
+        if self.reward_function == 'total_sum':
+            user_data = user_data.sort_values(by='rating', ascending=False)
+            sum_optimal_reward = np.sum(user_data[:self.k]['rating'])
+        elif self.reward_function == 'diversity':
+            super_set = self.greedy_oracle_for_diversity(self.real_score)
+            sum_optimal_reward = np.sum([self.real_score[arm] for arm in super_set])
         
         if t % 1000 == 0:
             print(f"round {t} is done")
@@ -63,3 +67,27 @@ class MovieLensDataLoader:
         reward = np.sum([scores[arm] for arm in super_set])
         reward += 1/2 * len(super_set) * np.log(2*np.pi*np.e) + 1/2 * np.log(np.linalg.det(np.dot(contexts, contexts.T)+np.eye(len(super_set))))
         return reward
+    
+    def greedy_oracle_for_diversity(self, est_scores, lamb = 0.2):
+        dim = self.dim
+        k = self.k
+        contexts = self.contexts
+        N = len(est_scores)
+        
+        sigma = 1
+        C = sigma**(-2)
+        As = set(range(N))
+        S = set()
+        XS = np.array(np.zeros(dim)).reshape(dim, -1)
+        for _ in range(k):
+            delta_gs = np.zeros(N)
+            delta_Rs = np.zeros(N)
+            for arm in set.difference(As, S):
+                Sigma_iS = np.dot(contexts[arm], XS)
+                delta_Rs[arm] = est_scores[arm]
+                delta_gs[arm] = 1/2 * np.log(2 * np.pi * np.e * (sigma**2 + np.dot(Sigma_iS, C).dot(Sigma_iS.T)))
+            S.add(np.argmax(delta_Rs + lamb * delta_gs))
+            XS = np.array([contexts[arm] for arm in S]).T
+            C = np.linalg.inv(np.dot(XS.T, XS) + sigma**2 * np.eye(len(S)))
+            
+        return np.array(list(S))
