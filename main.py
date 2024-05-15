@@ -11,12 +11,14 @@ from models.LinTS import LinTS
 from models.C2SB import C2SB
 from utils.oracle import set_oracle
 
-
-
 opts = read_options(sys.argv[1:])
 
 base_dir = os.getcwd()
-save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}_seed_{opts.seed}"
+
+if opts.dataset == 'numerical':
+    save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}_seed_{opts.seed}"
+else: # real data
+    save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_d_{opts.dim}_reward_{opts.reward_function}_k_{opts.super_set_size}_seed_{opts.seed}"
 
 if save_path is not None:
     save_path = base_dir + '/results/' + save_path
@@ -31,16 +33,24 @@ if save_path is not None:
 if opts.dataset == 'numerical':
     from data_loader.numerical_loader import *
     data_loader = NumericalDataLoader(opts)
+elif opts.dataset == 'movielens':
+    from data_loader.movielens_loader import *
+    data_loader = MovieLensDataLoader(opts)
+    data_loader.print_info()
 
 print("This simulation is running with the following options:")
 print(*opts.__dict__.items(), sep="\n")
 
-exploitation_rate_tuning_list = [1, 0.5, 0.25, 0.125, 0.0625, 0.0125, 0.00625]
+# exploitation_rate_tuning_list = [1, 0.5, 0.25, 0.125, 0.0625, 0.0125, 0.00625]
+exploitation_rate_tuning_list = [0.0125, 0.00625]
 tuning_num = len(exploitation_rate_tuning_list)
 
 if opts.is_tuning == True:
-    save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
-    print(save_name)    
+    if opts.dataset == 'numerical':
+        save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+    else:
+        save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_d_{opts.dim}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+
     # opt_cum_expected_reward, opt_cum_real_reward = optimal()
     for model, oracle in eval(opts.models):
         oracle_func = set_oracle(oracle)
@@ -61,8 +71,12 @@ if opts.is_tuning == True:
 
 # when tuning is not needed
 else:
-    tuning_save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
-    save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+    if opts.dataset == 'numerical':
+        tuning_save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+        save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+    else:
+        tuning_save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_d_{opts.dim}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+        save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_d_{opts.dim}_reward_{opts.reward_function}_k_{opts.super_set_size}"
     
     for model, oracle in eval(opts.models):
         oracle_func = set_oracle(oracle)
@@ -82,8 +96,7 @@ else:
             real_rewards, regrets = eval(model)(data_loader, exploitation_rate, oracle_func)
             cum_reward_list.append(np.cumsum(real_rewards))
             cum_regret_list.append(np.cumsum(regrets))
-        # pd.DataFrame(cum_reward_list).to_csv(f"{save_path}/cum_reward_{model}_{save_name}.csv", index=False)
-        # pd.DataFrame(cum_regret_list).to_csv(f"{save_path}/cum_regret_{model}_{save_name}.csv", index=False)        
+                
         with open(f"{save_path}/cum_reward_{model}_{oracle}_{save_name}.npy", "wb") as f:
             np.save(f, cum_reward_list)
         with open(f"{save_path}/cum_regret_{model}_{oracle}_{save_name}.npy", "wb") as f:
