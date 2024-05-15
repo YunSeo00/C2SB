@@ -110,8 +110,8 @@ class PMF:
         U_grad = (errors[:, np.newaxis] * V_batch - self.U[user_indices, :] / self.sigma_UV**2) / self.sigma2
         V_grad = (errors[:, np.newaxis] * U_batch - self.V[item_indices, :] / self.sigma_UV**2) / self.sigma2
         
-        self.U[user_indices, :] -= self.learning_rate * U_grad
-        self.V[item_indices, :] -= self.learning_rate * V_grad
+        self.U[user_indices, :] += self.learning_rate * U_grad
+        self.V[item_indices, :] += self.learning_rate * V_grad
 
     def sigmoid(self, x):
         """
