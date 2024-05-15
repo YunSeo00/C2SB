@@ -29,7 +29,7 @@ if save_path is not None:
 
 # load data_loader
 if opts.dataset == 'numerical':
-    from data_loader.numerical_data import *
+    from data_loader.numerical_loader import *
     data_loader = NumericalDataLoader(opts)
 
 print("This simulation is running with the following options:")
