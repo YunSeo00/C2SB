@@ -1,4 +1,6 @@
 results
-data
+data/ml-25m
+data/riiid
+notebooks
 *.pyc
 /log
