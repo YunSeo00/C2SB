@@ -44,13 +44,13 @@ class MovieLensDataLoader:
         user = self.query_seq[t]
         user_data = self.data[self.data['userId'] == user]
         user_data = user_data.sort_values(by='rating', ascending=False)
-        contexts = self.item_emb[user_data[:self.k]['movieId'].values]
+        self.contexts = self.item_emb[user_data[:self.k]['movieId'].values]
         sum_optimal_reward = np.sum(user_data[:self.k]['rating'])
-        real_score = np.array(user_data['rating'])
+        self.real_score = np.array(user_data['rating'])
         
         if t % 1000 == 0:
             print(f"round {t} is done")
-        return sum_optimal_reward, real_score, contexts
+        return sum_optimal_reward, self.real_score, self.contexts
     
     def calculate_reward(self, arms, t, scores):
         return eval('self.' + self.reward_function)(arms, t, scores)
@@ -59,7 +59,7 @@ class MovieLensDataLoader:
         return np.sum([scores[arm] for arm in super_set])
 
     def diversity(self, super_set, t, scores):
-        contexts = np.array([self.data[t][0][arm] for arm in super_set])
+        contexts = np.array([self.contexts[arm] for arm in super_set])
         reward = np.sum([scores[arm] for arm in super_set])
         reward += 1/2 * len(super_set) * np.log(2*np.pi*np.e) + 1/2 * np.log(np.linalg.det(np.dot(contexts, contexts.T)+np.eye(len(super_set))))
         return reward
