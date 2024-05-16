@@ -16,6 +16,8 @@ def C2SB(data_loader, v, oracle_func):
     
     for t in range(num_of_rounds):
         sum_optimal_reward, real_scores, contexts = data_loader.load_data_at_round_t(t)
+        if mu is None:
+            N = len(real_scores)
         
         # update estimate and compute estimated scores
         mu_hat = np.linalg.inv(B).dot(y)
