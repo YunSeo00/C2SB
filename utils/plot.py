@@ -25,23 +25,28 @@ def read_options(args=sys.argv[1:]):
 
 opts = read_options(sys.argv[1:])
 
-opts = read_options(sys.argv[1:])
-
 base_dir = os.getcwd()
-save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}_seed_{opts.seed}"
+if opts.dataset == 'numerical':
+    save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}_seed_{opts.seed}"
+else: # real data
+    save_path = f"dataset_{opts.dataset}_iteration_{opts.iterations}_tuningT_{opts.tuning_time_horizon}_d_{opts.dim}_reward_{opts.reward_function}_k_{opts.super_set_size}_seed_{opts.seed}"
 save_path = base_dir + '/results/' + save_path
 
-save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+if opts.dataset == 'numerical':
+    save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_T_{opts.time_horizon}_error_var_{str(opts.error_var).replace('.','')}_d_{opts.dim}_n_{opts.arms}_nu_{opts.nu}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+else:
+    save_name = f"dataset_{opts.dataset}_iteration_{opts.iterations}_d_{opts.dim}_reward_{opts.reward_function}_k_{opts.super_set_size}"
+
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 4))
 fig.tight_layout(pad=4.0)
-steps = np.arange(1, opts.time_horizon+1)
 
 models = eval(opts.models)
 colors = ['r','b','g','y','m','c','k','o','p']
 
 for model, oracle in eval(opts.models):
     data = np.load(f'{save_path}/cum_{opts.which_plot}_{model}_{oracle}_{save_name}.npy')
+    steps = np.arange(data.shape[1])
     
     model_mean = np.mean(data, axis=0)
     model_std = np.std(data, axis=0)
